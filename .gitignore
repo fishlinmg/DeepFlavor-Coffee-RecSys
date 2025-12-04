@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# 虚拟环境
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# TensorFlow / Keras
+*.h5
+*.hdf5
+*.pb
+logs/
+.mypy_cache/
+.pytest_cache/
+.coverage
+
+# 环境变量
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 数据文件
+data/*.csv
+data/*.npy
+data/*.pkl
+!data/.gitkeep
+
+# 模型文件
+models/*.h5
+models/*.pkl
+!models/.gitkeep
+
+# 日志
+*.log
+
+# 临时文件
+tmp/
+temp/

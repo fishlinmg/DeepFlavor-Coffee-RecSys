@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DeepFlavor Coffee Recommender{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --coffee-brown: #6F4E37;
+            --coffee-light: #A0826D;
+            --coffee-cream: #F5E6D3;
+            --coffee-dark: #3E2723;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--coffee-brown) 0%, var(--coffee-dark) 100%);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--coffee-brown) 0%, var(--coffee-light) 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 30px;
+        }
+
+        .feature-card {
+            transition: transform 0.3s ease;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .coffee-card {
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .coffee-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .btn-coffee {
+            background-color: var(--coffee-brown);
+            border-color: var(--coffee-brown);
+            color: white;
+        }
+
+        .btn-coffee:hover {
+            background-color: var(--coffee-dark);
+            border-color: var(--coffee-dark);
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--coffee-brown);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .recommendation-item {
+            border-left: 4px solid var(--coffee-brown);
+            padding: 15px;
+            margin: 10px 0;
+            background-color: white;
+            border-radius: 8px;
+        }
+
+        .similarity-badge {
+            background: linear-gradient(135deg, var(--coffee-light), var(--coffee-brown));
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .radar-chart {
+            width: 100%;
+            height: 400px;
+            margin: 20px 0;
+        }
+
+        .slider-container {
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .feature-value {
+            color: var(--coffee-brown);
+            font-weight: bold;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #fff, var(--coffee-cream));
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--coffee-light);
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--coffee-brown);
+        }
+
+        .footer {
+            background-color: var(--coffee-dark);
+            color: white;
+            padding: 30px 0;
+            margin-top: 50px;
+        }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-coffee me-2"></i>
+                DeepFlavor Coffee
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/coffee_list">咖啡列表</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analysis">数据分析</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/evaluation">模型评估</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-coffee me-2"></i>DeepFlavor Coffee Recommender</h5>
+                    <p class="mb-0">基于 1D-CNN 自编码器的精品咖啡深度推荐系统</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">© 2023 Coffee Recommender System</p>
+                    <p class="mb-0"><small>使用深度学习技术，为您推荐完美的咖啡体验</small></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

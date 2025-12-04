@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+
+{% block title %}DeepFlavor Coffee Recommender - 首页{% endblock %}
+
+{% block content %}
+<!-- 英雄区域 -->
+<div class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 mb-3">
+            <i class="fas fa-coffee me-3"></i>
+            DeepFlavor Coffee
+        </h1>
+        <p class="lead mb-4">基于 1D-CNN 自编码器的精品咖啡深度风味推荐系统</p>
+        <p class="mb-4">利用深度学习技术，将10维感官评分映射为64维深度特征，为您推荐最符合口味的咖啡</p>
+        <a href="#recommend-section" class="btn btn-light btn-lg">
+            <i class="fas fa-search me-2"></i>
+            开始推荐
+        </a>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 统计信息 -->
+    <div class="row mb-5">
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <i class="fas fa-mug-hot fa-2x mb-2" style="color: var(--coffee-brown);"></i>
+                <div class="stats-number">{{ stats.total_coffees }}</div>
+                <div class="text-muted">精品咖啡</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <i class="fas fa-globe fa-2x mb-2" style="color: var(--coffee-brown);"></i>
+                <div class="stats-number">{{ stats.unique_countries }}</div>
+                <div class="text-muted">咖啡产地</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <i class="fas fa-seedling fa-2x mb-2" style="color: var(--coffee-brown);"></i>
+                <div class="stats-number">{{ stats.unique_varieties }}</div>
+                <div class="text-muted">咖啡品种</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <i class="fas fa-star fa-2x mb-2" style="color: var(--coffee-brown);"></i>
+                <div class="stats-number">{{ "%.1f"|format(stats.avg_score) }}</div>
+                <div class="text-muted">平均评分</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 推荐功能 -->
+    <div id="recommend-section" class="row mb-5">
+        <div class="col-12 mb-4">
+            <h2 class="text-center mb-4">
+                <i class="fas fa-magic me-2"></i>
+                推荐功能
+            </h2>
+        </div>
+
+        <!-- 方法选择 -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">选择推荐方法</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="method" id="method-deep" value="deep" checked>
+                                <label class="form-check-label" for="method-deep">
+                                    <strong>深度特征推荐</strong> <span class="badge bg-success">推荐</span>
+                                    <small class="text-muted d-block">基于64维深度特征向量，使用余弦相似度</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="method" id="method-original" value="original">
+                                <label class="form-check-label" for="method-original">
+                                    <strong>原始特征推荐</strong> <span class="badge bg-secondary">基线</span>
+                                    <small class="text-muted d-block">基于10维标准化特征，使用欧氏距离</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 两种推荐方式 -->
+        <div class="col-md-6 mb-4">
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-search me-2" style="color: var(--coffee-brown);"></i>
+                        相似咖啡检索
+                    </h5>
+                    <p class="card-text">选择一款您喜欢的咖啡，我们将为您推荐相似的精品咖啡。</p>
+                    <div class="mb-3">
+                        <label class="form-label">选择咖啡</label>
+                        <select class="form-select" id="coffee-select">
+                            <option value="">请选择咖啡...</option>
+                            {% for coffee in coffee_list %}
+                            <option value="{{ coffee.id }}">
+                                {{ coffee.name }} - {{ coffee.country }} (评分: {{ coffee.overall_score }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="btn btn-coffee w-100" onclick="recommendByCoffee()">
+                        <i class="fas fa-coffee me-2"></i>
+                        开始推荐
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-sliders-h me-2" style="color: var(--coffee-brown);"></i>
+                        偏好滑块推荐
+                    </h5>
+                    <p class="card-text">通过调整感官特征滑块，设置您的口味偏好，我们将为您推荐最匹配的咖啡。</p>
+
+                    <!-- 感官特征滑块 -->
+                    <div id="preference-sliders">
+                        <!-- Aroma -->
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-wind me-1"></i>干香 (Aroma)</span>
+                                <span class="feature-value" id="value-Aroma">7.5</span>
+                            </div>
+                            <input type="range" class="form-range" id="Aroma" min="0" max="10" step="0.1" value="7.5" oninput="updateValue('Aroma')">
+                        </div>
+
+                        <!-- Flavor -->
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-utensils me-1"></i>风味 (Flavor)</span>
+                                <span class="feature-value" id="value-Flavor">7.5</span>
+                            </div>
+                            <input type="range" class="form-range" id="Flavor" min="0" max="10" step="0.1" value="7.5" oninput="updateValue('Flavor')">
+                        </div>
+
+                        <!-- Aftertaste -->
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-history me-1"></i>余韵 (Aftertaste)</span>
+                                <span class="feature-value" id="value-Aftertaste">7.5</span>
+                            </div>
+                            <input type="range" class="form-range" id="Aftertaste" min="0" max="10" step="0.1" value="7.5" oninput="updateValue('Aftertaste')">
+                        </div>
+
+                        <!-- Acidity -->
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-lemon me-1"></i>酸度 (Acidity)</span>
+                                <span class="feature-value" id="value-Acidity">7.5</span>
+                            </div>
+                            <input type="range" class="form-range" id="Acidity" min="0" max="10" step="0.1" value="7.5" oninput="updateValue('Acidity')">
+                        </div>
+
+                        <!-- Body -->
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-glass-water me-1"></i>醇度 (Body)</span>
+                                <span class="feature-value" id="value-Body">7.5</span>
+                            </div>
+                            <input type="range" class="form-range" id="Body" min="0" max="10" step="0.1" value="7.5" oninput="updateValue('Body')">
+                        </div>
+
+                        <!-- Balance -->
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-balance-scale me-1"></i>平衡 (Balance)</span>
+                                <span class="feature-value" id="value-Balance">7.5</span>
+                            </div>
+                            <input type="range" class="form-range" id="Balance" min="0" max="10" step="0.1" value="7.5" oninput="updateValue('Balance')">
+                        </div>
+
+                        <!-- Uniformity -->
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-check-circle me-1"></i>一致性 (Uniformity)</span>
+                                <span class="feature-value" id="value-Uniformity">7.5</span>
+                            </div>
+                            <input type="range" class="form-range" id="Uniformity" min="0" max="10" step="0.1" value="7.5" oninput="updateValue('Uniformity')">
+                        </div>
+
+                        <!-- Clean Cup -->
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-trophy me-1"></i>干净度 (Clean Cup)</span>
+                                <span class="feature-value" id="value-Clean Cup">7.5</span>
+                            </div>
+                            <input type="range" class="form-range" id="Clean Cup" min="0" max="10" step="0.1" value="7.5" oninput="updateValue('Clean Cup')">
+                        </div>
+
+                        <!-- Sweetness -->
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-candy-cane me-1"></i>甜度 (Sweetness)</span>
+                                <span class="feature-value" id="value-Sweetness">7.5</span>
+                            </div>
+                            <input type="range" class="form-range" id="Sweetness" min="0" max="10" step="0.1" value="7.5" oninput="updateValue('Sweetness')">
+                        </div>
+
+                        <!-- Cupper Points -->
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-star me-1"></i>杯测师评分 (Cupper Points)</span>
+                                <span class="feature-value" id="value-Cupper Points">7.5</span>
+                            </div>
+                            <input type="range" class="form-range" id="Cupper Points" min="0" max="10" step="0.1" value="7.5" oninput="updateValue('Cupper Points')">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-coffee w-100 mt-3" onclick="recommendByPreferences()">
+                        <i class="fas fa-magic me-2"></i>
+                        基于偏好推荐
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 推荐结果 -->
+    <div id="results-section" style="display: none;">
+        <h3 class="mb-4">
+            <i class="fas fa-list me-2"></i>
+            推荐结果
+        </h3>
+
+        <!-- 加载提示 -->
+        <div id="loading-indicator" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p class="text-center text-muted">正在分析并推荐中...</p>
+        </div>
+
+        <!-- 推荐列表 -->
+        <div id="recommendations-list"></div>
+
+        <!-- 雷达图 -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-radar me-2"></i>
+                    风味特征对比
+                </h5>
+                <div id="radar-chart" class="radar-chart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 更新滑块值显示
+    function updateValue(feature) {
+        const slider = document.getElementById(feature);
+        const valueDisplay = document.getElementById('value-' + feature);
+        valueDisplay.textContent = slider.value;
+    }
+
+    // 获取当前选中的推荐方法
+    function getSelectedMethod() {
+        return document.querySelector('input[name="method"]:checked').value;
+    }
+
+    // 基于咖啡ID推荐
+    function recommendByCoffee() {
+        const coffeeId = document.getElementById('coffee-select').value;
+        if (!coffeeId) {
+            alert('请选择一款咖啡！');
+            return;
+        }
+
+        const method = getSelectedMethod();
+        showLoading();
+        fetch('/search_by_coffee', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                coffee_id: parseInt(coffeeId),
+                method: method,
+                top_k: 5
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                displayRecommendations(data.recommendations);
+                renderRadarChart(data.radar_data);
+            } else {
+                alert('推荐失败: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            alert('发生错误: ' + error);
+        });
+    }
+
+    // 基于偏好推荐
+    function recommendByPreferences() {
+        const features = ['Aroma', 'Flavor', 'Aftertaste', 'Acidity', 'Body', 'Balance', 'Uniformity', 'Clean Cup', 'Sweetness', 'Cupper Points'];
+        const preferences = features.map(feature => parseFloat(document.getElementById(feature).value));
+
+        const method = getSelectedMethod();
+        showLoading();
+        fetch('/search_by_preferences', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                preferences: preferences,
+                method: method,
+                top_k: 5
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                displayRecommendations(data.recommendations);
+                renderRadarChart(data.radar_data);
+            } else {
+                alert('推荐失败: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            alert('发生错误: ' + error);
+        });
+    }
+
+    // 显示推荐结果
+    function displayRecommendations(recommendations) {
+        const listContainer = document.getElementById('recommendations-list');
+        listContainer.innerHTML = '';
+
+        recommendations.forEach((rec, index) => {
+            const coffee = rec.coffee;
+            const item = document.createElement('div');
+            item.className = 'recommendation-item';
+            item.innerHTML = `
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>
+                            <i class="fas fa-coffee me-2" style="color: var(--coffee-brown);"></i>
+                            ${index + 1}. ${coffee.name}
+                        </h5>
+                        <p class="mb-1">
+                            <i class="fas fa-map-marker-alt me-1 text-muted"></i>
+                            ${coffee.country} |
+                            <i class="fas fa-seedling me-1 text-muted"></i>
+                            ${coffee.variety} |
+                            <i class="fas fa-cog me-1 text-muted"></i>
+                            ${coffee.processing}
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <span class="similarity-badge">
+                            <i class="fas fa-percentage me-1"></i>
+                            相似度: ${(rec.similarity * 100).toFixed(2)}%
+                        </span>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-star me-1"></i>
+                        总体评分: ${coffee.overall_score.toFixed(2)} |
+                        <i class="fas fa-building me-1"></i>
+                        庄园: ${coffee.owner}
+                    </small>
+                </div>
+            `;
+            listContainer.appendChild(item);
+        });
+
+        document.getElementById('results-section').style.display = 'block';
+        document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 绘制雷达图
+    function renderRadarChart(data) {
+        const chartDom = document.getElementById('radar-chart');
+        const myChart = echarts.init(chartDom);
+
+        const option = {
+            title: {
+                text: '咖啡风味特征雷达图',
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item'
+            },
+            legend: {
+                bottom: 10
+            },
+            radar: {
+                indicator: data.categories.map(cat => ({
+                    name: cat,
+                    max: 10
+                }))
+            },
+            series: [{
+                name: '风味特征',
+                type: 'radar',
+                data: data.series.map((s, index) => ({
+                    value: s.data,
+                    name: s.name,
+                    itemStyle: {
+                        color: ['#6F4E37', '#A0826D', '#D4A574', '#8B6F47', '#5D4037'][index % 5]
+                    }
+                }))
+            }]
+        };
+
+        myChart.setOption(option);
+    }
+
+    // 显示加载提示
+    function showLoading() {
+        document.getElementById('loading-indicator').style.display = 'block';
+        document.getElementById('results-section').style.display = 'none';
+    }
+
+    // 隐藏加载提示
+    function hideLoading() {
+        document.getElementById('loading-indicator').style.display = 'none';
+    }
+</script>
+{% endblock %}

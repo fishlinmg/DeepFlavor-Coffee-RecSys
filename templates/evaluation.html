@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}模型评估 - DeepFlavor Coffee{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">
+        <i class="fas fa-chart-line me-2"></i>
+        模型性能评估
+    </h2>
+
+    <!-- 对比结果 -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-brain me-2" style="color: var(--coffee-brown);"></i>
+                        深度特征推荐 (1D-CNN)
+                    </h5>
+                    <div class="text-center">
+                        <div class="display-4 mb-3" style="color: var(--coffee-brown);">
+                            {{ "%.3f"|format(comparison.deep.avg_similarity) }}
+                        </div>
+                        <p class="text-muted">平均相似度</p>
+                        <hr>
+                        <small class="text-muted">
+                            评估样本: {{ comparison.deep.evaluation_samples }}<br>
+                            MSE: {{ "%.6f"|format(comparison.deep.avg_mse) }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-simple me-2" style="color: #999;"></i>
+                        原始特征推荐 (基线)
+                    </h5>
+                    <div class="text-center">
+                        <div class="display-4 mb-3" style="color: #999;">
+                            {{ "%.3f"|format(comparison.original.avg_similarity) }}
+                        </div>
+                        <p class="text-muted">平均相似度</p>
+                        <hr>
+                        <small class="text-muted">
+                            评估样本: {{ comparison.original.evaluation_samples }}<br>
+                            MSE: {{ "%.6f"|format(comparison.original.avg_mse) }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 性能对比图表 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        推荐方法性能对比
+                    </h5>
+                    <div id="comparison-chart" style="width: 100%; height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 改进指标 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-trophy me-2"></i>
+                        深度学习模型改进效果
+                    </h5>
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h3 style="color: var(--coffee-brown);">
+                                {{ "%.2f"|format(comparison.improvement.similarity_gain / comparison.original.avg_similarity * 100) }}%
+                            </h3>
+                            <p class="text-muted">相似度提升</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 style="color: var(--coffee-brown);">
+                                {{ "%.4f"|format(comparison.improvement.mse_reduction) }}
+                            </h3>
+                            <p class="text-muted">MSE 降低</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 style="color: var(--coffee-brown);">
+                                {{ ((comparison.deep.avg_similarity - comparison.original.avg_similarity) / comparison.original.avg_similarity * 100)|round(2) }}%
+                            </h3>
+                            <p class="text-muted">相对提升</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结论 -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="fas fa-lightbulb me-2"></i>
+                实验结论
+            </h5>
+            <div class="alert alert-info">
+                <h6><i class="fas fa-check-circle me-2"></i>实验成功！</h6>
+                <p class="mb-2">
+                    基于 <strong>1D-CNN自编码器</strong> 的深度特征推荐系统相比传统原始特征推荐：
+                </p>
+                <ul class="mb-0">
+                    <li>相似度提升了 <strong>{{ "%.2f"|format(comparison.improvement.similarity_gain / comparison.original.avg_similarity * 100) }}%</strong></li>
+                    <li>MSE 降低了 <strong>{{ "%.4f"|format(comparison.improvement.mse_reduction) }}</strong></li>
+                    <li>深度特征能够更好地捕捉咖啡风味之间的潜在关联</li>
+                    <li>64维潜在向量比10维原始特征具有更强的表征能力</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 对比图表
+    const comparisonChart = echarts.init(document.getElementById('comparison-chart'));
+    const comparisonOption = {
+        title: {
+            text: '两种推荐方法性能对比',
+            left: 'center'
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            }
+        },
+        legend: {
+            data: ['深度特征推荐', '原始特征推荐'],
+            top: 30
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            data: ['相似度', 'MSE']
+        },
+        yAxis: {
+            type: 'value'
+        },
+        series: [
+            {
+                name: '深度特征推荐',
+                type: 'bar',
+                data: [
+                    {{ comparison.deep.avg_similarity }},
+                    {{ comparison.deep.avg_mse }}
+                ],
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#6F4E37' },
+                        { offset: 1, color: '#A0826D' }
+                    ])
+                },
+                label: {
+                    show: true,
+                    position: 'top',
+                    formatter: function(params) {
+                        if (params.dataIndex === 0) {
+                            return params.value.toFixed(3);
+                        } else {
+                            return params.value.toFixed(6);
+                        }
+                    }
+                }
+            },
+            {
+                name: '原始特征推荐',
+                type: 'bar',
+                data: [
+                    {{ comparison.original.avg_similarity }},
+                    {{ comparison.original.avg_mse }}
+                ],
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#999999' },
+                        { offset: 1, color: '#CCCCCC' }
+                    ])
+                },
+                label: {
+                    show: true,
+                    position: 'top',
+                    formatter: function(params) {
+                        if (params.dataIndex === 0) {
+                            return params.value.toFixed(3);
+                        } else {
+                            return params.value.toFixed(6);
+                        }
+                    }
+                }
+            }
+        ]
+    };
+    comparisonChart.setOption(comparisonOption);
+
+    // 响应式
+    window.addEventListener('resize', function() {
+        comparisonChart.resize();
+    });
+</script>
+{% endblock %}
