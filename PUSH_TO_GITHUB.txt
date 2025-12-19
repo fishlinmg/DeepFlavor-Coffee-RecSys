@@ -1,0 +1,7 @@
+# 执行以下命令推送代码到GitHub：
+git remote add origin https://github.com/fishlinmg/DeepFlavor-Coffee-RecSys.git
+git branch -M main
+git push -u origin main
+
+# 如果上面的命令需要认证，请使用GitHub Personal Access Token:
+# git remote add origin https://fishlinmg:YOUR_TOKEN@github.com/fishlinmg/DeepFlavor-Coffee-RecSys.git

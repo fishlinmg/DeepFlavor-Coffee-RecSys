@@ -14,7 +14,7 @@ scikit-learn>=1.1.0
 # 数据可视化
 matplotlib>=3.5.0
 plotly>=5.10.0
-echarts>=5.4.0
+# 注意：ECharts是前端JavaScript库，通过CDN在HTML中引用
 
 # 其他工具
 joblib>=1.2.0

@@ -15,26 +15,26 @@ def check_dependencies():
     print("正在检查依赖...")
     try:
         import tensorflow as tf
-        print(f"✓ TensorFlow {tf.__version__}")
+        print(f"[OK] TensorFlow {tf.__version__}")
     except ImportError:
-        print("✗ TensorFlow 未安装，请运行: pip install tensorflow")
+        print("[FAIL] TensorFlow 未安装，请运行: pip install tensorflow")
         return False
 
     try:
         import flask
-        print(f"✓ Flask {flask.__version__}")
+        print(f"[OK] Flask {flask.__version__}")
     except ImportError:
-        print("✗ Flask 未安装，请运行: pip install flask")
+        print("[FAIL] Flask 未安装，请运行: pip install flask")
         return False
 
     try:
         import sklearn
-        print(f"✓ Scikit-learn {sklearn.__version__}")
+        print(f"[OK] Scikit-learn {sklearn.__version__}")
     except ImportError:
-        print("✗ Scikit-learn 未安装，请运行: pip install scikit-learn")
+        print("[FAIL] Scikit-learn 未安装，请运行: pip install scikit-learn")
         return False
 
-    print("✓ 所有依赖检查通过！\n")
+    print("[OK] 所有依赖检查通过！\n")
     return True
 
 
@@ -42,10 +42,10 @@ def check_data_file():
     """检查数据文件是否存在"""
     data_path = 'data/coffee_data.csv'
     if os.path.exists(data_path):
-        print(f"✓ 发现数据文件: {data_path}")
+        print(f"[OK] 发现数据文件: {data_path}")
         return True
     else:
-        print(f"⚠ 未找到数据文件: {data_path}")
+        print(f"[WARNING] 未找到数据文件: {data_path}")
         print("  请将CQI咖啡数据集放置在此路径")
         print("  或使用 --generate-sample 参数生成示例数据\n")
         return False
@@ -88,7 +88,7 @@ def generate_sample_data():
 
     # 保存数据
     df.to_csv('data/coffee_data.csv', index=False)
-    print(f"✓ 示例数据已生成: data/coffee_data.csv")
+    print(f"[OK] 示例数据已生成: data/coffee_data.csv")
     print(f"  包含 {n_samples} 条咖啡记录\n")
     return True
 
@@ -104,11 +104,11 @@ def initialize_system():
         recommender = CoffeeRecommender()
         recommender.initialize(force_retrain=True)
 
-        print("\n✓ 系统初始化完成！")
+        print("\n[OK] 系统初始化完成！")
         return True
 
     except Exception as e:
-        print(f"\n✗ 系统初始化失败: {e}")
+        print(f"\n[FAIL] 系统初始化失败: {e}")
         return False
 
 
@@ -160,7 +160,7 @@ def main():
         if not initialize_system():
             sys.exit(1)
     else:
-        print("⚠ 跳过系统初始化，仅启动服务器")
+        print("[WARNING] 跳过系统初始化，仅启动服务器")
 
     # 启动服务器
     try:

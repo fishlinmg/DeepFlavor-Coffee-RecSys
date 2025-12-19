@@ -77,10 +77,11 @@ class CoffeeAutoencoder:
         encoder = keras.Model(input_layer, latent, name='encoder')
 
         # 构建解码器（仅用于测试）
-        decoder_input = layers.Input(shape=(self.latent_dim,))
-        decoder_output = autoencoder.layers[-3](decoder_input)  # Dense层
-        decoder_output = autoencoder.layers[-2](decoder_output)  # Dense层
-        decoder_output = autoencoder.layers[-1](decoder_output)  # Reshape层
+        # 从完整的autoencoder中提取解码器部分
+        latent_layer = autoencoder.get_layer('latent_vector')
+        decoder_input = latent_layer.output
+        # 解码器的输出是autoencoder的最后一层
+        decoder_output = autoencoder.layers[-1].output
         decoder = keras.Model(decoder_input, decoder_output, name='decoder')
 
         self.model = autoencoder
@@ -146,9 +147,11 @@ class CoffeeAutoencoder:
         ]
 
         # 训练模型
-        validation_data = (X_val_reshaped, X_val_reshaped) if X_val is not None else None
         if X_val is not None:
             X_val_reshaped = X_val.reshape(X_val.shape[0], X_val.shape[1], 1)
+            validation_data = (X_val_reshaped, X_val_reshaped)
+        else:
+            validation_data = None
 
         self.history = self.model.fit(
             X_train_reshaped, X_train_reshaped,
@@ -249,12 +252,27 @@ class CoffeeAutoencoder:
         print(f"正在加载模型: {model_path}")
         self.model = keras.models.load_model(model_path)
 
-        # 重新构建编码器和解码器
-        self.build_model()
+        # 从完整的autoencoder模型中提取编码器
+        # 编码器是从输入层到latent_vector层
+        latent_layer = self.model.get_layer('latent_vector')
+        encoder_input = self.model.input
+        encoder_output = latent_layer.output
+        self.encoder = keras.Model(encoder_input, encoder_output, name='encoder')
 
-        # 设置编码器和解码器的权重
-        self.encoder.set_weights(self.model.get_weights()[:len(self.encoder.get_weights())])
-        self.decoder.set_weights(self.model.get_weights()[len(self.encoder.get_weights()):])
+        # 从完整的autoencoder模型中提取解码器
+        # 解码器是从latent_vector层到输出层
+        decoder_input = latent_layer.output
+        # 找到latent_vector层在模型中的位置
+        latent_index = -1
+        for i, layer in enumerate(self.model.layers):
+            if layer.name == 'latent_vector':
+                latent_index = i
+                break
+        
+        # 解码器的输入是latent_vector
+        # 解码器的输出是模型的最后一层
+        decoder_output = self.model.layers[-1].output
+        self.decoder = keras.Model(decoder_input, decoder_output, name='decoder')
 
         print("模型加载完成！")
 
